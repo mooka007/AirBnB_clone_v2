@@ -125,7 +125,22 @@ class HBNBCommand(cmd.Cmd):
             return
 
         new_instance = HBNBCommand.classes[class_name]()
-        
+        for arg in arg_list[1:]:
+            param = arg.split('=')
+            key = param[0]
+            val = param[1]
+            if val[0] == '\"':
+                val = val.replace('\"', '').replace('_', ' ')
+            elif '.' in val:
+                val = float(val)
+            else:
+                val = int(val)
+
+            #Parts of setattr
+            #self: what class or object
+            #key: the variable you are affecting
+            #val: what the variable's value will be
+            setattr(new_instance, key, val)
 
         new_instance.save()
         print(new_instance.id)

@@ -1,24 +1,25 @@
 #!/usr/bin/python3
-"""Script that list all states"""
-from flask import Flask, render_template
+"""
+Script that starts a Flask web application
+"""
 from models import storage
+from models.state import State
+from flask import Flask, request, render_template
 
-app = Flask(__name__, template_folder="templates")
-app.url_map.strict_slashes = False
-
-
-@app.route('/cities_by_states')
-def states_list():
-    """displays a new HTML page"""
-    new_dict = storage.all('State')
-    return render_template('8-cities_by_states.html', states=new_dict)
+app = Flask(__name__)
 
 
 @app.teardown_appcontext
-def teardown_db(exception):
-    """Remove the current SQLAlchemy"""
+def tearDown(self):
     storage.close()
 
 
+@app.route("/cities_by_states", strict_slashes=False)
+def statesList():
+    data = storage.all(State).values()
+    states = sorted(data, key=lambda x: x.name)
+    return render_template('8-cities_by_states.html', states=states)
+
+
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port='5000')
+    app.run(host="0.0.0.0", port="5000")

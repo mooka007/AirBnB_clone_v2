@@ -1,13 +1,12 @@
 #!/usr/bin/python3
 """ Place Module for HBNB project """
 from models.base_model import BaseModel, Base
-from sqlalchemy import Column, Integer, String, ForeignKey, Float, Table
+from sqlalchemy import Column, String, ForeignKey, Integer, Float, Table
 from sqlalchemy.orm import relationship
-from models.amenity import Amenity
 from models.review import Review
-from os import getenv
+import os
 
-storage_type = getenv("HBNB_TYPE_STORAGE")
+STORAGE = os.getenv("HBNB_TYPE_STORAGE")
 
 place_amenity = Table(
     "place_amenity",
@@ -17,15 +16,15 @@ place_amenity = Table(
         String(60),
         ForeignKey("places.id"),
         primary_key=True,
-        nullable=False,
+        nullable=False
     ),
     Column(
         "amenity_id",
         String(60),
         ForeignKey("amenities.id"),
         primary_key=True,
-        nullable=False,
-    ),
+        nullable=False
+    )
 )
 
 
@@ -33,7 +32,7 @@ class Place(BaseModel, Base):
     """A place to stay"""
 
     __tablename__ = "places"
-    if storage_type == "db":
+    if STORAGE == "db":
         city_id = Column(String(60), ForeignKey("cities.id"), nullable=False)
         user_id = Column(String(60), ForeignKey("users.id"), nullable=False)
         name = Column(String(128), nullable=False)
@@ -44,11 +43,13 @@ class Place(BaseModel, Base):
         price_by_night = Column(Integer, nullable=False, default=0)
         latitude = Column(Float, nullable=True)
         longitude = Column(Float, nullable=True)
-        amenities = relationship("Amenity", secondary=place_amenity,
-                                 viewonly=False,
-                                 back_populates="place_amenities")
-        reviews = relationship('Review', cascade="all,delete", backref="place")
-
+        reviews = relationship(
+            'Review', backref="place",
+            cascade="all, delete-orphan")
+        amenities = relationship(
+            "Amenity", secondary=place_amenity,
+            viewonly=False,
+        )
     else:
         city_id = ""
         user_id = ""
@@ -62,30 +63,34 @@ class Place(BaseModel, Base):
         longitude = 0.0
         amenity_ids = []
 
-        @property
-        def amenities(self):
-            """Getter docuemnt"""
-            from models import storage
-            amenitiesList = []
-            amenitiesAll = storage.all(Amenity)
-            for amenity in amenitiesAll.values():
-                if amenity.id in self.amenity_ids:
-                    amenitiesList.append(amenity)
-            return amenitiesList
+    @property
+    def reviews(self):
+        """Returns the cities"""
+        from models import storage
 
-        @property
-        def reviews(self):
-            """Getter document"""
-            from models import storage
-            reviewsList = []
-            reviewsAll = storage.all(Review)
-            for review in reviewsAll.values():
-                if review.place_id in self.id:
-                    reviewsList.append(review)
-            return reviewsList
+        review_list = []
+        for key, value in storage.all(Review).items():
+            if self.id == value.place.id:
+                review_list.append(value)
+        return review_list
 
-        @amenities.setter
-        def amenities(self, amenity):
-            """Setter document"""
-            if isinstance(amenity, Amenity):
-                self.amenity_ids.append(amenity.id)
+    @property
+    def amenities(self):
+        """Getter method for amenities."""
+        from models import storage
+        from models.amenity import Amenity
+
+        amenity_objs = storage.all(Amenity)
+        amenity_ids = [pa.amenity_id for pa in self.place_amenities]
+        return [amenity_objs[aid] for aid in amenity_ids]
+
+    @amenities.setter
+    def amenities(self, amenity_obj):
+        from models.amenity import Amenity
+
+        """Setter method for amenities."""
+        if isinstance(amenity_obj, Amenity):
+            self.place_amenities.append(
+                Place.place_amenity(place_id=self.id,
+                                    amenity_id=amenity_obj.id)
+            )

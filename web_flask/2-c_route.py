@@ -1,28 +1,31 @@
 #!/usr/bin/python3
-"""Script that prepares a Flask web app"""
+"""
+Importing the flask module
+"""
+
 from flask import Flask
+
 app = Flask(__name__)
-app.url_map.strict_slashes = False
 
 
-@app.route('/')
-def hi_hbnb():
-    """display “Hello HBNB!” on the terminal"""
-    return 'Hello HBNB!'
+@app.route("/", strict_slashes=False)
+def hello_hbnb():
+    """A funtion that defines a return value."""
+    return "Hello HBNB!"
 
 
-@app.route('/hbnb',)
+@app.route("/hbnb", strict_slashes=False)
 def hbnb():
-    """Display HBNB"""
-    return 'HBNB!'
+    """A function that returns HBNB"""
+    return "HBNB"
 
 
-@app.route('/c/<text>')
-def c(text):
-    """display c follow by the value"""
-    repla = text.replace('_', ' ')
-    return 'C {}' .format(repla)
+@app.route("/c/<text>", strict_slashes=False)
+def ctext(text):
+    """A function that returns text"""
+    text = text.replace("_", " ")
+    return f"C {text}"
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port='5000')
+    app.run()
